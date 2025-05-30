@@ -54,21 +54,6 @@
             </div>
         </a>
     </div>
-    
-    <div class="col-lg-3 col-md-6">
-        <a href="/penilaian" class="text-decoration-none">
-            <div class="stats-card bg-blue">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">Data Penilaian</h6>
-                        <h3>{{ $totalPenilaian }}</h3>
-                    </div>
-                    <i class="fas fa-calculator"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
 
 <!-- Action Cards -->
 <div class="row">
