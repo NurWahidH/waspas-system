@@ -6,7 +6,7 @@
         <h2 class="fw-bold text-dark">Dashboard</h2>
         <div class="alert alert-info" role="alert">
             <i class="fas fa-info-circle me-2"></i>
-            Selamat datang! 
+            Pilih Menu Yang Tersedia! 
         </div>
     </div>
 </div>

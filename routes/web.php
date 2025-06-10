@@ -1,37 +1,53 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KriteriaController;
 use App\Http\Controllers\SubKriteriaController;
 use App\Http\Controllers\AlternatifController;
 use App\Http\Controllers\PenilaianController;
 use App\Http\Controllers\HasilController;
+use App\Http\Controllers\AccountController;
 
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+// Authentication routes
+Route::middleware('guest')->group(function () {
+    Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
 
-Route::get('kriteria', [KriteriaController::class, 'index'])->name('kriteria.index');
-Route::get('kriteria/create', [KriteriaController::class, 'create'])->name('kriteria.create');
-Route::post('kriteria', [KriteriaController::class, 'store'])->name('kriteria.store');
-Route::get('kriteria/{kriteria}', [KriteriaController::class, 'show'])->name('kriteria.show');
-Route::get('kriteria/{kriteria}/edit', [KriteriaController::class, 'edit'])->name('kriteria.edit');
-Route::put('kriteria/{kriteria}', [KriteriaController::class, 'update'])->name('kriteria.update');
-Route::delete('kriteria/{kriteria}', [KriteriaController::class, 'destroy'])->name('kriteria.destroy');
+// Logout route (available for authenticated users)
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::get('sub-kriteria', [SubKriteriaController::class, 'index'])->name('sub-kriteria.index');
-Route::get('sub-kriteria/create', [SubKriteriaController::class, 'create'])->name('sub-kriteria.create');
-Route::post('sub-kriteria', [SubKriteriaController::class, 'store'])->name('sub-kriteria.store');
-Route::get('sub-kriteria/{subKriteria}/edit', [SubKriteriaController::class, 'edit'])->name('sub-kriteria.edit');
-Route::put('sub-kriteria/{subKriteria}', [SubKriteriaController::class, 'update'])->name('sub-kriteria.update');
-Route::delete('sub-kriteria/{subKriteria}', [SubKriteriaController::class, 'destroy'])->name('sub-kriteria.destroy');
-
-// TAMBAHKAN ROUTE INI - Route untuk sinkronisasi alternatif (harus SEBELUM resource route)
-Route::get('alternatif/sync', [AlternatifController::class, 'syncWithKriteria'])->name('alternatif.sync');
-
-// Resource route untuk alternatif
-Route::resource('alternatif', AlternatifController::class);
-// Tambahkan ke dalam web.php
-
-Route::get('/penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
-
-Route::get('hasil', [HasilController::class, 'index'])->name('hasil.index');
+// Protected routes (requires authentication)
+Route::middleware('auth')->group(function () {
+    // Dashboard route
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Kriteria routes
+    Route::resource('kriteria', KriteriaController::class)->parameters([
+        'kriteria' => 'kriteria'
+    ]);
+    
+    // Sub-kriteria routes 
+    Route::resource('sub-kriteria', SubKriteriaController::class)
+        ->except(['show'])
+        ->parameters(['sub-kriteria' => 'subKriteria']);
+    
+    // Alternatif routes dengan custom route untuk sync
+    Route::get('alternatif/sync', [AlternatifController::class, 'syncWithKriteria'])->name('alternatif.sync');
+    Route::resource('alternatif', AlternatifController::class);
+    
+    // Single action controllers
+    Route::get('penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
+    Route::get('hasil', [HasilController::class, 'index'])->name('hasil.index');
+    
+    // Account management routes
+    Route::prefix('account')->name('account.')->group(function () {
+        Route::get('/', [AccountController::class, 'index'])->name('index');
+        Route::put('/profile', [AccountController::class, 'updateProfile'])->name('update-profile');
+        Route::put('/password', [AccountController::class, 'updatePassword'])->name('update-password');
+    });
+});
