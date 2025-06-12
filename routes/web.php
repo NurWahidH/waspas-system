@@ -18,11 +18,26 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-// Logout route (available for authenticated users)
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
-
-// Protected routes (requires authentication)
+// Routes untuk user yang sudah login tapi belum tentu verified
 Route::middleware('auth')->group(function () {
+    // Logout route
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    
+    // Email verification routes
+    Route::get('/email/verify', [AuthController::class, 'showVerificationNotice'])
+        ->name('verification.notice');
+    
+    Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+        
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});
+
+// Protected routes (requires authentication + email verification)
+Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     

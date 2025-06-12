@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 class AuthController extends Controller
 {
@@ -42,6 +44,12 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
+            
+            // Check if email is verified
+            if (!Auth::user()->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+            
             return redirect()->intended(route('dashboard'))
                 ->with('success', 'Selamat datang, ' . Auth::user()->nama_lengkap . '!');
         }
@@ -91,10 +99,44 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Trigger email verification
+        event(new Registered($user));
+        
         Auth::login($user);
 
+        return redirect()->route('verification.notice')
+            ->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.');
+    }
+
+    // Show email verification notice
+    public function showVerificationNotice()
+    {
+        if (Auth::user()->hasVerifiedEmail()) {
+            return redirect()->route('dashboard');
+        }
+        
+        return view('auth.verify-email');
+    }
+
+    // Handle email verification
+    public function verifyEmail(EmailVerificationRequest $request)
+    {
+        $request->fulfill();
+
         return redirect()->route('dashboard')
-            ->with('success', 'Registrasi berhasil! Selamat datang, ' . $user->nama_lengkap . '!');
+            ->with('success', 'Email berhasil diverifikasi! Selamat datang, ' . Auth::user()->nama_lengkap . '!');
+    }
+
+    // Resend verification email
+    public function resendVerificationEmail(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('dashboard');
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('success', 'Link verifikasi telah dikirim ulang ke email Anda!');
     }
 
     // Logout
