@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -55,8 +56,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('alternatif/sync', [AlternatifController::class, 'syncWithKriteria'])->name('alternatif.sync');
     Route::resource('alternatif', AlternatifController::class);
     
-    // Single action controllers
-    Route::get('penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
+    // Penilaian routes dengan export functionality
+    Route::prefix('penilaian')->name('penilaian.')->group(function () {
+        Route::get('/', [PenilaianController::class, 'index'])->name('index');
+        Route::get('/sync', [PenilaianController::class, 'syncPenilaian'])->name('sync');
+        
+        // Export routes
+        Route::get('/export/excel', [PenilaianController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/export/word', [PenilaianController::class, 'exportWord'])->name('export.word');
+        Route::get('/export/pdf', [PenilaianController::class, 'exportPdf'])->name('export.pdf');
+    });
+    
+    // Hasil route
     Route::get('hasil', [HasilController::class, 'index'])->name('hasil.index');
     
     // Account management routes
